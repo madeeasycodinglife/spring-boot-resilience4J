@@ -1,0 +1,115 @@
+server:
+  port: 8081
+resilience4j:
+  circuitbreaker:
+    configs:
+      customCircuitBreakerConfig:
+        registerHealthIndicator: true
+        failureRateThreshold: 20
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 5s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        slidingWindowType: COUNT_BASED
+    instances:
+      myCircuitBreaker: # this name is used in the annotation
+        baseConfig: customCircuitBreakerConfig
+  #  The timeout duration specifies how long a request(restTemplate/webclient) should wait before they are considered "timed out"
+  #  and their request to enter the restaurant is rejected. represents the maximum waiting time for a request(restTemplate/webclient)
+  #  and any requests that are not able to proceed within the specified timeout duration are rejected to maintain
+  # the responsiveness and stability of the application.
+  ratelimiter:
+    configs:
+      customRateLimiterConfig:
+        limitRefreshPeriod: 10s # The time period after which the rate limiting counters should be reset. In this case, it is set to 10 seconds.
+        limitForPeriod: 2 #The maximum number of requests allowed within the limitRefreshPeriod. Here, it is set to 10 requests.
+        timeoutDuration: 500ms #The duration after which a request should be considered as timed out. In this example, it is set to 500 milliseconds.
+    instances:
+      myRateLimiter: # this name is used in the annotation
+        baseConfig: customRateLimiterConfig
+
+  #  the bulkhead configuration sets a limit on the number of calls that can be made concurrently to a
+  #  particular service or component. This prevents overloading and isolates failures, allowing the system
+  #  to handle high loads and maintain stability.
+  #  In this example, if more than 2 concurrent calls are made to the myServiceMethod() at the same time, the bulkhead will kick in.
+  bulkhead:
+    configs:
+      customBulkheadConfig:
+        maxConcurrentCalls: 2 # The maximum number of calls or requests allowed to be processed concurrently. In this case, it is set to 2 calls.
+        maxWaitDuration: 1000ms # The maximum time a call should wait to be processed before it is rejected. Here, it is set to 1000 milliseconds (1 second).
+    instances:
+      myBulkhead: # this name is used in the annotation
+        baseConfig: customBulkheadConfig
+
+# to see the working of @Retry() method then stop the service which is being called in this case department service
+  retry:
+    configs:
+      customRetryConfig:
+        maxAttempts: 3 # The maximum number of attempts to retry the operation. In this example, it is set to 3 attempt.
+        waitDuration: 2s # The duration to wait between retry attempts.
+        retryExceptions:
+          - java.lang.RuntimeException # The specific exceptions for which the retry should be triggered. In this case, the retry will be attempted only for java.lang.RuntimeException exceptions.
+    instances:
+      myRetry: # this name is used in the annotation
+        baseConfig: customRetryConfig
+
+  timelimiter:
+    configs:
+      customTimeLimiterConfig:
+        timeoutDuration: 1ms #1ms The maximum duration allowed for the operation[request(restTemplate/webclient)] to complete.
+        cancelRunningFuture: true # If cancelRunningFuture is set to false, the running task will be allowed to complete
+          #even if it exceeds the timeout duration. If it's set to true, the running task will be canceled
+        #when the timeout is reached.
+    instances:
+      myTimeLimiter: # this name is used in the annotation
+        baseConfig: customTimeLimiterConfig
+
+
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    circuitbreakers:
+      enabled: true
+
+
+#
+#resilience4j:
+#  circuitbreaker:
+#    instances:
+#      cb-instanceA:
+#        failure-rate-threshold: 60  #The Threshold Percentage Above Which the Circuit Breaker will move from Closed to Open State.
+#        wait-duration-in-open-state: 5000  #Time in milliseconds, in which the circuit breaker is to stay in open state before moving to half-open state
+#        permitted-number-of-calls-in-half-open-state: 10
+#        minimum-number-of-calls: 10  #The number of calls after which the error rate is calculated. I have assigned it with a small value for test purpose.
+#  ratelimiter:
+#    instances:
+#      rl-instanceA:
+#        limit-refresh-period: 200ns
+#        limit-for-period: 40 #The Max number of calls that can be done in the time specified by limit-refresh-period
+#        timeout-duration: 3s # The max amount of time a call can last
+#  thread-pool-bulkhead:
+#    instances:
+#      tp-instanceA:
+#        queue-capacity: 2 #The number of calls which can be queued if the thread pool is saturated
+#        core-thread-pool-size: 4 #The Number of available threads in the Thread Pool.
+#  timelimiter:
+#    instances:
+#      tl-instanceA:
+#        timeout-duration: 2s # The max amount of time a call can last
+#        cancel-running-future: false #do not cancel the Running Completable Futures After TimeOut.
+#  retry:
+#    instances:
+#      re-instanceA:
+#        max-attempts: 3
+#        wait-duration: 1s # After this time, the call will be considered a failure and will be retried
+#        retry-exceptions: #The List Of Exceptions That Will Trigger a Retry
+#          - java.lang.RuntimeException
+#          - java.io.IOException
