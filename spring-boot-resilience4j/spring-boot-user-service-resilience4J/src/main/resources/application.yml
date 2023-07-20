@@ -1,5 +1,9 @@
 server:
   port: 8081
+# The failureRateThreshold is calculated as follows:
+# failureRateThreshold = (number of failures / slidingWindowSize) * 100
+# In your example, the failureRateThreshold would be calculated as follows:
+# failureRateThreshold = (5 / 10) * 100 = 50%
 resilience4j:
   circuitbreaker:
     configs:
