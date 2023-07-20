@@ -37,6 +37,7 @@ resilience4j:
     configs:
       customBulkheadConfig:
         maxConcurrentCalls: 2 # The maximum number of calls or requests allowed to be processed concurrently. In this case, it is set to 2 calls.
+        # If more than 2 requests are made to the endpoint, the requests will be rejected [from https://bard.google.com/] if you have doubt then verify in restclient like postman .
         maxWaitDuration: 1000ms # The maximum time a call should wait to be processed before it is rejected. Here, it is set to 1000 milliseconds (1 second).
     instances:
       myBulkhead: # this name is used in the annotation
